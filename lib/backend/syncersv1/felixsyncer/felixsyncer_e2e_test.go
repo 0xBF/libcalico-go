@@ -186,54 +186,22 @@ var _ = testutils.E2eDatastoreDescribe("Felix syncer tests", testutils.Datastore
 				Value: "true",
 			})
 
-			if config.Spec.DatastoreType != apiconfig.Kubernetes {
-				By("Creating a HostEndpoint")
-				hep, err := c.HostEndpoints().Create(
-					ctx,
-					&apiv2.HostEndpoint{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: "hosta.eth0-a",
-							Labels: map[string]string{
-								"label1": "value1",
-							},
-						},
-						Spec: apiv2.HostEndpointSpec{
-							Node:          "127.0.0.1",
-							InterfaceName: "eth0",
-							ExpectedIPs:   []string{"1.2.3.4", "aa:bb::cc:dd"},
-							Profiles:      []string{"profile1", "profile2"},
-							Ports: []apiv2.EndpointPort{
-								{
-									Name:     "port1",
-									Protocol: numorstring.ProtocolFromString("tcp"),
-									Port:     1234,
-								},
-								{
-									Name:     "port2",
-									Protocol: numorstring.ProtocolFromString("udp"),
-									Port:     1010,
-								},
-							},
-						},
-					},
-					options.SetOptions{},
-				)
-
-				Expect(err).NotTo(HaveOccurred())
-				// The host endpoint will add as single entry ( +1 )
-				expectedCacheSize += 1
-				syncTester.ExpectCacheSize(expectedCacheSize)
-				syncTester.ExpectData(model.KVPair{
-					Key: model.HostEndpointKey{Hostname: "127.0.0.1", EndpointID: "hosta.eth0-a"},
-					Value: &model.HostEndpoint{
-						Name:              "eth0",
-						ExpectedIPv4Addrs: []net.IP{net.MustParseIP("1.2.3.4")},
-						ExpectedIPv6Addrs: []net.IP{net.MustParseIP("aa:bb::cc:dd")},
+			By("Creating a HostEndpoint")
+			hep, err := c.HostEndpoints().Create(
+				ctx,
+				&apiv2.HostEndpoint{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "hosta.eth0-a",
 						Labels: map[string]string{
 							"label1": "value1",
 						},
-						ProfileIDs: []string{"profile1", "profile2"},
-						Ports: []model.EndpointPort{
+					},
+					Spec: apiv2.HostEndpointSpec{
+						Node:          "127.0.0.1",
+						InterfaceName: "eth0",
+						ExpectedIPs:   []string{"1.2.3.4", "aa:bb::cc:dd"},
+						Profiles:      []string{"profile1", "profile2"},
+						Ports: []apiv2.EndpointPort{
 							{
 								Name:     "port1",
 								Protocol: numorstring.ProtocolFromString("tcp"),
@@ -246,9 +214,39 @@ var _ = testutils.E2eDatastoreDescribe("Felix syncer tests", testutils.Datastore
 							},
 						},
 					},
-					Revision: hep.ResourceVersion,
-				})
-			}
+				},
+				options.SetOptions{},
+			)
+
+			Expect(err).NotTo(HaveOccurred())
+			// The host endpoint will add as single entry ( +1 )
+			expectedCacheSize += 1
+			syncTester.ExpectCacheSize(expectedCacheSize)
+			syncTester.ExpectData(model.KVPair{
+				Key: model.HostEndpointKey{Hostname: "127.0.0.1", EndpointID: "hosta.eth0-a"},
+				Value: &model.HostEndpoint{
+					Name:              "eth0",
+					ExpectedIPv4Addrs: []net.IP{net.MustParseIP("1.2.3.4")},
+					ExpectedIPv6Addrs: []net.IP{net.MustParseIP("aa:bb::cc:dd")},
+					Labels: map[string]string{
+						"label1": "value1",
+					},
+					ProfileIDs: []string{"profile1", "profile2"},
+					Ports: []model.EndpointPort{
+						{
+							Name:     "port1",
+							Protocol: numorstring.ProtocolFromString("tcp"),
+							Port:     1234,
+						},
+						{
+							Name:     "port2",
+							Protocol: numorstring.ProtocolFromString("udp"),
+							Port:     1010,
+						},
+					},
+				},
+				Revision: hep.ResourceVersion,
+			})
 
 			By("Starting a new syncer and verifying that all current entries are returned before sync status")
 			// We need to create a new syncTester and syncer.

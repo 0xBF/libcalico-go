@@ -192,6 +192,12 @@ func NewKubeClient(kc *apiconfig.KubeConfig) (api.Client, error) {
 	kubeClient.registerResourceClient(
 		reflect.TypeOf(model.ResourceKey{}),
 		reflect.TypeOf(model.ResourceListOptions{}),
+		apiv2.KindHostEndpoint,
+		resources.NewHostEndpointClient(cs, crdClientV1),
+	)
+	kubeClient.registerResourceClient(
+		reflect.TypeOf(model.ResourceKey{}),
+		reflect.TypeOf(model.ResourceListOptions{}),
 		apiv2.KindWorkloadEndpoint,
 		resources.NewWorkloadEndpointClient(cs),
 	)
@@ -265,6 +271,7 @@ func (c *KubeClient) Clean() error {
 		apiv2.KindFelixConfiguration,
 		apiv2.KindGlobalNetworkPolicy,
 		apiv2.KindIPPool,
+		apiv2.KindHostEndpoint,
 	}
 	ctx := context.Background()
 	for _, k := range kinds {
@@ -330,6 +337,8 @@ func buildCRDClientV1(cfg rest.Config) (*rest.RESTClient, error) {
 				&apiv2.GlobalNetworkPolicyList{},
 				&apiv2.NetworkPolicy{},
 				&apiv2.NetworkPolicyList{},
+				&apiv2.HostEndpoint{},
+				&apiv2.HostEndpointList{},
 			)
 			return nil
 		})
